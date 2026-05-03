@@ -111,7 +111,7 @@ class FieldSolver:
                 basis_nodes =[n for n in self.nodes if n.root_id == r_id]
                 phi_ij = 0.0
                 
-                # 【核心重构】：抛弃采样点，利用解析积分恒等式直接计算边界电势
+                # 抛弃采样点，利用解析积分恒等式直接计算边界电势
                 for node in basis_nodes:
                     dist_to_center = abs(node.z - b.c)
                     
@@ -122,7 +122,7 @@ class FieldSolver:
                         # 像源在圆外，积分解析解取决于到圆心的距离
                         eff_dist = dist_to_center
                         
-                    # 纯拓扑代数累加，不再传入任何空间变量 Z
+                    # 纯代数累加，不传入任何空间变量 Z
                     phi_ij += -node.q_topo * np.log(eff_dist)
                     
                 A[i, j] = phi_ij
@@ -145,7 +145,7 @@ class FieldSolver:
             dist = np.maximum(np.abs(Z_grid - n.z), np.finfo(float).eps)
             Phi += -phys_q * np.log(dist)
             
-        # [核心修正]：彻底剥离人工掩膜，暴露圆柱内部的离散对数奇点场！
+        # 暴露圆柱内部的离散对数奇点场！
         # 仅通过 Numpy 的 clip 柔性修剪极值，防止等势线颜色标尺(Colorbar)被无穷大拉爆
         vmin, vmax = min([b.u for b in self.boundaries]), max([b.u for b in self.boundaries])
         # 动态宽容度，允许显示比边界高50%的内部奇点峰值，同时设置绝对下限防止过度压缩
@@ -162,7 +162,7 @@ def plot_tree(nodes):
         
     pos, x_coords, y_coords, texts, colors, custom_ids = {}, [], [], [], [],[]
     for gen, gen_nodes in layers.items():
-        # y_vals 从上往下排列，刚好对应 idx_in_gen
+        
         y_vals = np.linspace(1, -1, len(gen_nodes)+2)[1:-1] if len(gen_nodes)>1 else [0]
         for i, n in enumerate(gen_nodes):
             pos[n.id] = (gen, y_vals[i])
@@ -191,7 +191,7 @@ def plot_tree(nodes):
     fig.update_layout(title="N-ary Tree 繁衍图谱 (点击节点在左图亮显)", showlegend=False, 
                       xaxis=dict(title="迭代代数 (Generation)", tick0=0, dtick=1), 
                       yaxis=dict(showticklabels=False), margin=dict(l=10, r=10, t=40, b=10),
-                      dragmode='pan') # [修正] 强制默认拖拽模式为平移，从引擎层禁用框选虚线框
+                      dragmode='pan') 
     return fig
 
 # ================= 3. Streamlit 交互页面 =================
