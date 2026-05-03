@@ -1,6 +1,6 @@
 """
 app.py
-多边界广义镜像阵列法 半数值解析求解系统 (Cross-Linked Interactive Edition)
+多边界广义镜像阵列法 半数值解析求解系统 
 包含：图层拦截防穿透、点击联动高亮、严格序号标记
 """
 import streamlit as st
@@ -83,7 +83,7 @@ class ImageTreeEngine:
     def get_nodes(self):
         return[n for layer in self.layers for n in layer]
 
-# ================= 2. 场域解算与图论渲染器 =================
+# ================= 2. 场域解算与渲染器 =================
 
 class FieldSolver:
     def __init__(self, boundaries, nodes):
