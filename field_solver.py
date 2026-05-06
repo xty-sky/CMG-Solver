@@ -9,7 +9,6 @@ class FieldSolver:
         self.nodes = nodes
 
     def evaluate_grid(self, x_range, y_range):
-        """ 极简的解析场重构，直接暴露圆柱内部的磁位畸变 """
         X, Y = np.meshgrid(np.linspace(*x_range, 250), np.linspace(*y_range, 250))
         Z_grid = X + 1j * Y
         Az_grid = np.zeros_like(Z_grid, dtype=float)
