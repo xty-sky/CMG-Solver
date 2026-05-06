@@ -1,6 +1,5 @@
 """
 core_physics.py
-多边界稳磁场同构与映射裂变底层物理算子
 """
 import numpy as np
 
@@ -8,7 +7,7 @@ class SourceNode:
     def __init__(self, node_id, z, q_topo, parent_id=None, gen_by_boundary=None, generation=0, root_id=None, idx_in_gen=1):
         self.id = node_id
         self.z = z
-        self.q_topo = q_topo  # 在当前算法下，它直接代表真实的物理线电流 I
+        self.q_topo = q_topo 
         self.parent_id = parent_id
         self.gen_by = gen_by_boundary
         self.gen = generation
@@ -20,12 +19,11 @@ class CircularBoundary:
         self.id = b_id
         self.c = center
         self.r = radius
-        self.I = current_I  # 物理边界条件：圆柱内包含的总真实电流 I
+        self.I = current_I  
         self.K = K_mult
 
     def reflect(self, source: SourceNode, base_new_id: str, start_idx: int) -> list:
         """
-        【核心突破：映射裂变 (Mapping Fission)】
         根据偏微分方程边界推演，一次跨界反射必然裂变为两个像源：
         1. 反演点像源 (T_i)：强度衰减 K_m
         2. 轴心点像源 (C_i)：强度衰减 -K_m，位置在圆心
