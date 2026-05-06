@@ -1,16 +1,11 @@
 """
 app.py
 多边界广义镜像阵列法 半数值解析求解系统
-包含：图层拦截防穿透、点击联动高亮、严格序号标记
 """
 import streamlit as st
 import numpy as np
 import plotly.graph_objects as go
 
-
-class TrivialSolutionException(Exception):
-    """触发极值定理退化条件时抛出的自定义异常"""
-    pass
 
 class SourceNode:
     def __init__(self, node_id, z, q_topo, parent_id=None, gen_by_boundary=None, generation=0, root_id=None, idx_in_gen=1):
@@ -65,13 +60,6 @@ class ImageTreeEngine:
         self.layers =[]
         self.node_cnt = 0
 
-    def check_a_priori_conditions(self):
-        if not self.boundaries: return
-        u_vals = [b.u for b in self.boundaries]
-        # 若所有边界电位极差趋于0，触发极值定理熔断
-        if max(u_vals) - min(u_vals) < 1e-12:
-            raise TrivialSolutionException(f"退化熔断: 边界电位全为 {u_vals[0]}V，域内无源，全域电势为常数。")
-
     def seed_roots(self, external_sources=None):
         """ 双模态场源播种 (Seeding) """
         layer_0 =[]
@@ -106,7 +94,7 @@ class ImageTreeEngine:
             if abs(z_eval - b.c) <= b.r:
                 raise ValueError("播种失败：源点 Z0 位于实心边界内部，不符合拉普拉斯物理求解域约束！")
                 
-        # 初始种子不再绑定单一边界，它将同时对所有边界引发第一代反演
+        # 初始种子将同时对所有边界引发第一代反演
         node = SourceNode(node_id="root_custom", z=z_eval, q_topo=q_real, gen_by_boundary=None, root_id="root_custom")
         self.layers.append([node])
         self.node_cnt += 1
@@ -148,7 +136,7 @@ class ImageTreeEngine:
         # 若处于发散域 (如纯静电 K=-1)，关闭余项判定，交由 GUI 强制上限截断
         if rho >= 0.99: return False 
         
-        # 利用等比数列的无穷余项公式 E_N <= M * \rho / (1 - \rho) 进行严格放缩
+        # 利用余项公式 E_N <= M * \rho / (1 - \rho) 进行严格放缩
         max_q = np.max([abs(n.q_topo) for n in self.layers[-1]])
         error_bound = max_q * rho / (1.0 - rho)
         
@@ -164,17 +152,11 @@ class FieldSolver:
         self.nodes = nodes
         self.lambdas = {n.root_id: 1.0 for n in nodes} 
 
-    def solve_physics(self):
-        """ 稳磁场特化：真实源电流即物理基底，直接旁路矩阵解算器。 """
-        pass
-
     def evaluate_grid(self, x_range, y_range):
-        """ 极简解析场重构，完全保留空间对数场的真实起伏 """
         X, Y = np.meshgrid(np.linspace(*x_range, 250), np.linspace(*y_range, 250))
         Z_grid = X + 1j * Y
         Az_grid = np.zeros_like(Z_grid, dtype=float)
         
-        # 纯顺向累加真实格林函数
         for n in self.nodes:
             phys_I = n.q_topo * self.lambdas[n.root_id]
             # 引入 eps 防止 \ln(0) 引发底层 C 引擎 NaN 崩溃
@@ -219,14 +201,14 @@ def plot_tree(nodes):
         marker=dict(size=12, color=colors, colorscale='Viridis', showscale=True, colorbar=dict(title='Generation'))
     ))
     fig.update_layout(title="N-ary Tree 繁衍图谱 (点击节点在左图亮显)", showlegend=False, 
-                      xaxis=dict(title="迭代代数 (Generation)", tick0=0, dtick=1), 
+                      xaxis=dict(title="迭代代数", tick0=0, dtick=1), 
                       yaxis=dict(showticklabels=False), margin=dict(l=10, r=10, t=40, b=10),
                       dragmode='pan') 
     return fig
 
 
 st.set_page_config(page_title="多边界镜像法求解器", layout="wide")
-st.title("⚡ 广义镜像法半解析全链路求解系统")
+st.title("🧲 镜像阵列法半解析求解系统🧲 ")
 
 if 'engine' not in st.session_state: st.session_state.engine = None
 if 'converged' not in st.session_state:
@@ -319,7 +301,6 @@ if st.session_state.engine:
     
     with c1:
         solver = FieldSolver(st.session_state.engine.boundaries, nodes)
-        solver.solve_physics()
         X, Y, Az = solver.evaluate_grid((-6, 6), (-6, 6))
         
         vmin, vmax = np.percentile(Az, [1, 99])
